@@ -20,6 +20,7 @@ ha_platforms:
   - diagnostics
   - image
   - light
+  - number
   - sensor
   - switch
   - update
@@ -118,7 +119,7 @@ Include wired network clients:
 Track network devices:
   description: "Create device tracker entities for Ubiquiti network devices such as access points and switches."
 Track WAN networks:
-  description: "Create a device for each WAN network, with its status. See [WAN networks](#wan-networks). Turning this on or off takes effect without a restart. Disabled by default."
+  description: "Create a device for each WAN network, with its status and its failover settings. See [WAN networks](#wan-networks). Turning this on or off takes effect without a restart. Disabled by default."
 Select SSIDs to track wireless clients on:
   description: "Only track wireless clients connected to the selected SSIDs. Leave empty to track clients on all SSIDs."
 Time in seconds from last seen until considered away:
@@ -291,15 +292,32 @@ This will show if there are firmware updates available for the UniFi network dev
 
 ## WAN networks
 
-If your UniFi gateway has more than one internet connection, Home Assistant can show the status of each one. To use this, turn on **Track WAN networks** in the [configuration options](#configuration-options).
+If your UniFi gateway has more than one internet connection, Home Assistant can show the status of each one and let you change how the gateway fails over between them. To use this, turn on **Track WAN networks** in the [configuration options](#configuration-options).
 
-Each WAN network on your UniFi Network application, such as **Internet 1**, **Internet 2**, or **UniFi 5G A**, becomes its own device in Home Assistant with this entity:
+Each WAN network on your UniFi Network application, such as **Internet 1**, **Internet 2**, or **UniFi 5G A**, becomes its own device in Home Assistant with these entities:
 
 - **Status**: Shows the state of the connection:
   - **Disabled**: The WAN is disabled in UniFi Network.
   - **No link**: There is no link, for example because the cable is unplugged.
   - **Offline**: The link is up, but the gateway's internet check fails.
   - **Online**: The WAN is connected and has internet access.
+- **Failover priority**: A number from 1 to 10. A lower number means a more preferred WAN.
+- **Load balance weight**: A number from 1 to 99. Sets this WAN's share of traffic among the weighted WANs.
+
+Changing **Failover priority** or **Load balance weight** requires admin privileges.
+
+### How failover priority works
+
+- **Failover priority** always decides the order of your WANs.
+- **Load balance weight** only has an effect on WANs set to **Weighted** load balancing in UniFi Network, and only when at least two connected WANs are set to **Weighted**.
+- Two WANs can't have the same **Failover priority**. If you try, Home Assistant shows the error "Another WAN already uses this failover priority. Move that WAN to an unused priority first, then try again".
+- The settings of a disconnected WAN have no effect on how traffic is routed.
+
+To swap the priorities of two WANs, for example **Internet 1** at priority 1 and **Internet 2** at priority 2:
+
+1. Set **Internet 1** to an unused priority, such as 9.
+2. Set **Internet 2** to 1.
+3. Set **Internet 1** to 2.
 
 ## Examples
 
@@ -319,6 +337,7 @@ If the WebSocket connection is lost, the integration automatically tries to reco
 - **Early Access and Release Candidate versions of UniFi Network and UniFi OS are not supported.** Only the official Stable Release channel is expected to work with this integration.
 - **Presence detection is not compatible with MAC Address Randomization**, which is enabled by default on most modern smartphones. This feature must be disabled per network on the client device.
 - **Changes to LED control** on access points may take over 5 seconds to apply because the device must adopt a new configuration first.
+- **WAN failover priorities must be unique.** Two WANs can't share a failover priority. See [How failover priority works](#how-failover-priority-works).
 - **Lingering entities**: In some edge cases, clients or devices removed from UniFi Network may remain in the Home Assistant device registry and need to be [removed manually](#removing-a-device-in-home-assistant).
 
 ## Removing a device in Home Assistant
