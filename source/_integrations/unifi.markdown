@@ -118,7 +118,7 @@ Include wired network clients:
 Track network devices:
   description: "Create device tracker entities for Ubiquiti network devices such as access points and switches."
 Track WAN networks:
-  description: "Create a device for each WAN network, with its status. See [WAN networks](#wan-networks). Turning this on or off takes effect without a restart. Disabled by default."
+  description: "Create a device for each WAN network, with its status, latency, availability, and uptime sensors. See [WAN networks](#wan-networks). Turning this on or off takes effect without a restart. Disabled by default."
 Select SSIDs to track wireless clients on:
   description: "Only track wireless clients connected to the selected SSIDs. Leave empty to track clients on all SSIDs."
 Time in seconds from last seen until considered away:
@@ -291,15 +291,23 @@ This will show if there are firmware updates available for the UniFi network dev
 
 ## WAN networks
 
-If your UniFi gateway has more than one internet connection, Home Assistant can show the status of each one. To use this, turn on **Track WAN networks** in the [configuration options](#configuration-options).
+If your UniFi gateway has more than one internet connection, Home Assistant can show the status and quality of each one. To use this, turn on **Track WAN networks** in the [configuration options](#configuration-options).
 
-Each WAN network on your UniFi Network application, such as **Internet 1**, **Internet 2**, or **UniFi 5G A**, becomes its own device in Home Assistant with this entity:
+Each WAN network on your UniFi Network application, such as **Internet 1**, **Internet 2**, or **UniFi 5G A**, becomes its own device in Home Assistant with these entities:
 
 - **Status**: Shows the state of the connection:
   - **Disabled**: The WAN is disabled in UniFi Network.
   - **No link**: There is no link, for example because the cable is unplugged.
   - **Offline**: The link is up, but the gateway's internet check fails.
   - **Online**: The WAN is connected and has internet access.
+- **Latency**: The average latency of the WAN, in milliseconds, as measured by the gateway.
+- **Availability**: The percentage of time the WAN was available. The gateway measures this over its own period, which can differ per WAN, so the values of two WANs are not always comparable.
+- **Uptime**: When the WAN connection last came up.
+- **Microsoft latency**, **Google latency**, and **Cloudflare latency**: The latency to each of the gateway's monitoring targets, in milliseconds.
+
+Latency, availability, and uptime sensors are only created when the gateway reports them for that WAN.
+
+The latency sensors per monitoring target used to be disabled diagnostic sensors on the gateway device. They are now on the WAN device, and only exist while **Track WAN networks** is on. They keep their entity IDs and history.
 
 ## Examples
 
